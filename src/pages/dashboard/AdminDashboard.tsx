@@ -106,9 +106,9 @@ export function AdminDashboard() {
   return (
     <div className="h-screen flex flex-col bg-neutral-50">
       <header className="bg-white border-b border-neutral-200 flex-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center pl-2">
+            <div className="flex items-center">
               <Scale className="h-8 w-8 text-neutral-900" />
               <span className="ml-2 text-xl font-bold text-neutral-900">LegalAI RD - Admin</span>
             </div>
