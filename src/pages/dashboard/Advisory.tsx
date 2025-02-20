@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Mail, Send, FileText, Clock, AlertCircle, MessageSquare } from 'lucide-react';
+import { Mail, Send, FileText, Clock, AlertCircle, MessageSquare, User, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Database } from '@/lib/database.types';
@@ -43,7 +43,7 @@ export function Advisory() {
       console.error('Error loading advisories:', error);
       setMessage({
         type: 'error',
-        text: 'Error al cargar las asesorías'
+        text: 'Error al cargar las asesorías. Por favor, intenta de nuevo más tarde.'
       });
     } finally {
       setLoading(false);
@@ -113,9 +113,19 @@ export function Advisory() {
     >
       {/* Form Section */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-6">
-          Solicitar Asesoría Legal
-        </h2>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="bg-neutral-900 p-3 rounded-lg">
+            <FileText className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-neutral-900">
+              Solicitar Asesoría Legal
+            </h2>
+            <p className="text-neutral-600">
+              Completa el formulario para recibir asesoría personalizada
+            </p>
+          </div>
+        </div>
 
         {message && (
           <div className={`mb-6 p-4 rounded-md ${
@@ -209,9 +219,19 @@ export function Advisory() {
 
       {/* History Section */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-6">
-          Historial de Asesorías
-        </h2>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="bg-neutral-900 p-3 rounded-lg">
+            <Clock className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-neutral-900">
+              Historial de Asesorías
+            </h2>
+            <p className="text-neutral-600">
+              Consulta el estado de tus solicitudes anteriores
+            </p>
+          </div>
+        </div>
 
         {loading ? (
           <div className="text-center py-8">
@@ -230,41 +250,57 @@ export function Advisory() {
                 key={advisory.id}
                 className="border border-neutral-200 rounded-lg p-4 hover:border-neutral-300 transition-colors"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-neutral-900">
-                      {advisory.subject}
-                    </h3>
-                    <p className="text-neutral-600 text-sm mt-1">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-neutral-900">
+                        {advisory.subject}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-neutral-500">
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-1" />
+                          {advisory.full_name}
+                        </div>
+                        <div className="flex items-center">
+                          <Mail className="h-4 w-4 mr-1" />
+                          {advisory.email}
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm ${
+                      advisory.status === 'reviewed'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {advisory.status === 'reviewed' ? 'Revisada' : 'Pendiente'}
+                    </div>
+                  </div>
+
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Consulta:</h4>
+                    <p className="text-neutral-600">
                       {advisory.description}
                     </p>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-sm ${
-                    advisory.status === 'reviewed'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {advisory.status === 'reviewed' ? 'Revisada' : 'Pendiente'}
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center text-neutral-500">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {formatDate(advisory.created_at)}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-neutral-500">
+                      <Clock className="h-4 w-4 mr-1" />
+                      Enviada el {formatDate(advisory.created_at)}
+                    </div>
+                    
+                    {advisory.status === 'reviewed' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedAdvisory(advisory)}
+                        className="text-neutral-900"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Ver Respuesta
+                      </Button>
+                    )}
                   </div>
-                  
-                  {advisory.status === 'reviewed' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedAdvisory(advisory)}
-                      className="text-neutral-900"
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Ver Respuesta
-                    </Button>
-                  )}
                 </div>
               </div>
             ))}
@@ -280,38 +316,43 @@ export function Advisory() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl"
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Respuesta a tu Consulta</h2>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-neutral-900 p-2 rounded-lg">
+                  <MessageSquare className="h-5 w-5 text-white" />
+                </div>
+                <h2 className="text-xl font-semibold">Respuesta a tu Consulta</h2>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedAdvisory(null)}
+                className="hover:bg-neutral-100"
               >
-                ×
+                <X className="h-5 w-5" />
               </Button>
             </div>
 
-            <div className="mb-4">
-              <h3 className="font-medium text-neutral-900">Asunto</h3>
-              <p className="text-neutral-600">{selectedAdvisory.subject}</p>
-            </div>
+            <div className="space-y-6">
+              <div className="bg-neutral-50 rounded-lg p-4">
+                <h3 className="font-medium text-neutral-900 mb-2">Asunto</h3>
+                <p className="text-neutral-600">{selectedAdvisory.subject}</p>
+              </div>
 
-            <div className="mb-4">
-              <h3 className="font-medium text-neutral-900">Tu Consulta</h3>
-              <p className="text-neutral-600">{selectedAdvisory.description}</p>
-            </div>
+              <div className="bg-neutral-50 rounded-lg p-4">
+                <h3 className="font-medium text-neutral-900 mb-2">Tu Consulta</h3>
+                <p className="text-neutral-600">{selectedAdvisory.description}</p>
+              </div>
 
-            <div className="mb-4">
-              <h3 className="font-medium text-neutral-900">Respuesta</h3>
-              <div className="mt-2 p-4 bg-neutral-50 rounded-lg">
+              <div className="bg-green-50 rounded-lg p-4">
+                <h3 className="font-medium text-neutral-900 mb-2">Respuesta del Asesor</h3>
                 <p className="text-neutral-800 whitespace-pre-wrap">
                   {selectedAdvisory.response}
                 </p>
+                <div className="mt-4 pt-4 border-t border-green-100 text-sm text-neutral-500">
+                  Respondido el {formatDate(selectedAdvisory.responded_at || '')}
+                </div>
               </div>
-            </div>
-
-            <div className="text-sm text-neutral-500">
-              Respondido el {formatDate(selectedAdvisory.responded_at || '')}
             </div>
           </motion.div>
         </div>
