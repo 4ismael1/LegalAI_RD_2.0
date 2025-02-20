@@ -16,8 +16,10 @@ export function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionMessage, setSubscriptionMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscriptionDate, setSubscriptionDate] = useState<string>('');
 
@@ -75,10 +77,17 @@ export function AdminUsers() {
       if (updateError) throw updateError;
       
       await loadUsers();
+      setMessage({
+        type: 'success',
+        text: 'Usuario actualizado exitosamente'
+      });
       setSelectedUser(null);
     } catch (error) {
       console.error('Error updating user:', error);
-      setError('Error al actualizar el usuario. Por favor, intenta de nuevo.');
+      setMessage({ 
+        type: 'error',
+        text: 'Error al actualizar el usuario. Por favor, intenta de nuevo.'
+      });
     } finally {
       setUpdating(false);
     }
@@ -93,11 +102,23 @@ export function AdminUsers() {
       });
 
       if (error) throw error;
+
       await loadUsers();
-      setShowSubscriptionModal(false);
+      setSubscriptionMessage({
+        type: 'success',
+        text: 'Usuario actualizado a Plus exitosamente'
+      });
+      setTimeout(() => {
+        setShowSubscriptionModal(false);
+        setSelectedUser(null);
+        setSubscriptionMessage(null);
+      }, 2000);
     } catch (error) {
       console.error('Error upgrading to plus:', error);
-      setError('Error al actualizar la suscripción. Por favor, intenta de nuevo.');
+      setSubscriptionMessage({
+        type: 'error',
+        text: 'Error al actualizar a Plus. Por favor, intenta de nuevo.'
+      });
     } finally {
       setUpdating(false);
     }
@@ -112,11 +133,23 @@ export function AdminUsers() {
       });
 
       if (error) throw error;
+
       await loadUsers();
-      setShowSubscriptionModal(false);
+      setSubscriptionMessage({
+        type: 'success',
+        text: 'La suscripción será cancelada al final del período actual'
+      });
+      setTimeout(() => {
+        setShowSubscriptionModal(false);
+        setSelectedUser(null);
+        setSubscriptionMessage(null);
+      }, 2000);
     } catch (error) {
       console.error('Error downgrading subscription:', error);
-      setError('Error al actualizar la suscripción. Por favor, intenta de nuevo.');
+      setSubscriptionMessage({
+        type: 'error',
+        text: 'Error al cancelar la suscripción. Por favor, intenta de nuevo.'
+      });
     } finally {
       setUpdating(false);
     }
@@ -131,11 +164,23 @@ export function AdminUsers() {
       });
 
       if (error) throw error;
+
       await loadUsers();
-      setShowSubscriptionModal(false);
+      setSubscriptionMessage({
+        type: 'success',
+        text: 'La suscripción ha sido renovada exitosamente'
+      });
+      setTimeout(() => {
+        setShowSubscriptionModal(false);
+        setSelectedUser(null);
+        setSubscriptionMessage(null);
+      }, 2000);
     } catch (error) {
       console.error('Error renewing subscription:', error);
-      setError('Error al renovar la suscripción. Por favor, intenta de nuevo.');
+      setSubscriptionMessage({
+        type: 'error',
+        text: 'Error al renovar la suscripción. Por favor, intenta de nuevo.'
+      });
     } finally {
       setUpdating(false);
     }
@@ -145,17 +190,35 @@ export function AdminUsers() {
     setUpdating(true);
     setError(null);
     try {
-      const { error } = await supabase
+      // Format the date correctly for Postgres
+      const endDate = new Date(date);
+      endDate.setUTCHours(23, 59, 59, 999);
+      const isoDate = endDate.toISOString();
+
+      const { error: updateError } = await supabase
         .from('profiles')
-        .update({ subscription_end: date })
+        .update({ subscription_end: isoDate })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
       await loadUsers();
-      setShowSubscriptionModal(false);
+
+      setSubscriptionMessage({
+        type: 'success',
+        text: 'Fecha de suscripción actualizada exitosamente'
+      });
+      setTimeout(() => {
+        setShowSubscriptionModal(false);
+        setSelectedUser(null);
+        setSubscriptionMessage(null);
+      }, 2000);
     } catch (error) {
       console.error('Error updating subscription date:', error);
-      setError('Error al actualizar la fecha de suscripción. Por favor, intenta de nuevo.');
+      setSubscriptionMessage({
+        type: 'error',
+        text: 'Error al actualizar la fecha de suscripción. Por favor, intenta de nuevo.'
+      });
     } finally {
       setUpdating(false);
     }
@@ -186,6 +249,22 @@ export function AdminUsers() {
           <h2 className="text-2xl font-bold text-neutral-900">
             Gestión de Usuarios
           </h2>
+          {message && (
+            <div className={`mb-4 p-3 rounded-md ${
+              message.type === 'success' 
+                ? 'bg-green-50 text-green-600' 
+                : 'bg-red-50 text-red-600'
+            }`}>
+              <div className="flex items-center">
+                {message.type === 'success' ? (
+                  <Check className="h-5 w-5 mr-2" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 mr-2" />
+                )}
+                {message.text}
+              </div>
+            </div>
+          )}
           <div className="w-full sm:w-64">
             <input
               type="text"
@@ -289,6 +368,7 @@ export function AdminUsers() {
                         onClick={() => {
                           setSelectedUser(user);
                           setShowSubscriptionModal(false);
+                          setSubscriptionMessage(null);
                         }}
                       >
                         Editar
@@ -299,6 +379,7 @@ export function AdminUsers() {
                         onClick={() => {
                           setSelectedUser(user);
                           setShowSubscriptionModal(true);
+                          setSubscriptionMessage(null);
                           if (user.subscription_end) {
                             setSubscriptionDate(new Date(user.subscription_end).toISOString().split('T')[0]);
                           } else {
@@ -331,6 +412,7 @@ export function AdminUsers() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedUser(null)}
+                className="hover:bg-neutral-100"
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -468,15 +550,33 @@ export function AdminUsers() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl"
           >
-            <div className="flex justify-between items-center mb-6">
+            {subscriptionMessage && (
+              <div className={`mb-4 p-3 rounded-md ${
+                subscriptionMessage.type === 'success' 
+                  ? 'bg-green-50 text-green-600' 
+                  : 'bg-red-50 text-red-600'
+              }`}>
+                <div className="flex items-center">
+                  {subscriptionMessage.type === 'success' ? (
+                    <Check className="h-5 w-5 mr-2" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 mr-2" />
+                  )}
+                  {subscriptionMessage.text}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Gestionar Suscripción</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSelectedUser(null);
                   setShowSubscriptionModal(false);
+                  setSubscriptionMessage(null);
                 }}
+                className="hover:bg-neutral-100"
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -572,8 +672,8 @@ export function AdminUsers() {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setSelectedUser(null);
                   setShowSubscriptionModal(false);
+                  setSubscriptionMessage(null);
                 }}
                 disabled={updating}
               >
