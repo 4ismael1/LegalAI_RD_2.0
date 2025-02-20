@@ -25,7 +25,8 @@ import {
   RefreshCw,
   ChevronDown,
   BookOpen,
-  BarChart
+  BarChart,
+  Gauge
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -56,7 +57,7 @@ export function AdminDashboard() {
     { name: 'Leyes', href: '/dashboard/laws', icon: BookOpen },
     { name: 'Métricas', href: '/dashboard/metrics', icon: BarChart },
     { name: 'Ingresos', href: '/dashboard/revenue', icon: DollarSign },
-    { name: 'Límites API', href: '/dashboard/api-limits', icon: Settings },
+    { name: 'Límites API', href: '/dashboard/api-limits', icon: Gauge },
     { name: 'Perfil', href: '/dashboard/profile', icon: Settings },
   ];
 
