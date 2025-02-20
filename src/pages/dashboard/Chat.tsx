@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Send, MessageSquare, Bot, User as UserIcon, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, MessageSquare, Bot, User as UserIcon, Sparkles, AlertCircle, Loader2, Info } from 'lucide-react';
 import { createThread, sendMessage } from '@/lib/openai';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +32,7 @@ export function Chat() {
     remaining: number;
   } | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [showExperimentalInfo, setShowExperimentalInfo] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -249,9 +250,18 @@ export function Chat() {
                 <div className="bg-neutral-900 text-white p-6 rounded-full mb-6">
                   <Bot className="h-12 w-12" />
                 </div>
-                <h2 className="text-2xl font-bold text-neutral-900 mb-2">
-                  Asistente Legal AI
-                </h2>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <h2 className="text-2xl font-bold text-neutral-900">
+                    Asistente Legal AI
+                  </h2>
+                  <button
+                    onClick={() => setShowExperimentalInfo(true)}
+                    className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 hover:bg-yellow-200 transition-colors"
+                  >
+                    <Info className="h-3 w-3" />
+                    Experimental
+                  </button>
+                </div>
                 <p className="text-neutral-600 mb-8 max-w-md">
                   Estoy aquí para ayudarte con tus consultas legales. Puedes preguntarme sobre leyes, procedimientos y trámites en la República Dominicana.
                 </p>
@@ -401,6 +411,50 @@ export function Chat() {
           )}
         </div>
       </div>
+      
+      {/* Experimental Info Modal */}
+      {showExperimentalInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+                Asistente en Fase Experimental
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowExperimentalInfo(false)}
+              >
+                ×
+              </Button>
+            </div>
+            <div className="space-y-4 text-neutral-600">
+              <p>
+                Este asistente legal se encuentra en fase experimental y está en constante mejora.
+              </p>
+              <p>
+                Es importante tener en cuenta que:
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Las respuestas proporcionadas son de carácter informativo general.</li>
+                <li>Toda la información debe ser contrastada con fuentes oficiales y legislación vigente.</li>
+                <li>No sustituye el asesoramiento legal profesional.</li>
+                <li>Para casos específicos, se recomienda consultar con un abogado calificado.</li>
+              </ul>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <Button onClick={() => setShowExperimentalInfo(false)}>
+                Entendido
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
