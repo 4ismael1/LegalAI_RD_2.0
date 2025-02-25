@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { APILimits } from '@/lib/api';
+import { useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 type Message = {
@@ -18,12 +19,19 @@ export function Chat() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Try to restore messages from local storage
+    const savedMessages = localStorage.getItem(`chat_messages_${location.state?.sessionId || 'new'}`);
+    return savedMessages ? JSON.parse(savedMessages) : [];
+  });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(true);
-  const [threadId, setThreadId] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(() => {
+    // Try to restore thread ID from local storage
+    return localStorage.getItem(`chat_thread_${location.state?.sessionId || 'new'}`);
+  });
+  const [sessionId, setSessionId] = useState<string | null>(() => location.state?.sessionId || null);
   const [error, setError] = useState<string | null>(null);
   const [apiLimitReached, setApiLimitReached] = useState(false);
   const [dailyStats, setDailyStats] = useState<{
@@ -34,6 +42,20 @@ export function Chat() {
   const [showExperimentalInfo, setShowExperimentalInfo] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Persist chat state to local storage
+  const persistChatState = useCallback(() => {
+    const storageKey = sessionId || 'new';
+    localStorage.setItem(`chat_messages_${storageKey}`, JSON.stringify(messages));
+    if (threadId) {
+      localStorage.setItem(`chat_thread_${storageKey}`, threadId);
+    }
+  }, [messages, threadId, sessionId]);
+
+  // Save chat state when messages or thread ID change
+  useEffect(() => {
+    persistChatState();
+  }, [messages, threadId, persistChatState]);
+
   useEffect(() => {
     if (!user) return;
 
@@ -41,7 +63,6 @@ export function Chat() {
       try {
         setLoadingChat(true);
         setError(null);
-        setMessages([]);
         const existingSessionId = location.state?.sessionId;
 
         // Load API limits
@@ -49,12 +70,15 @@ export function Chat() {
         setDailyStats(stats);
         setApiLimitReached(stats.remaining <= 0);
 
+        // Only load from API if we don't have messages in state
         if (existingSessionId) {
           await loadExistingChat(existingSessionId);
         } else {
-          const thread = await createThread();
-          setThreadId(thread.id);
-          setSessionId(null);
+          if (!threadId) {
+            const thread = await createThread();
+            setThreadId(thread.id);
+            setSessionId(null);
+          }
         }
       } catch (err) {
         console.error('Error initializing chat:', err);
@@ -65,6 +89,7 @@ export function Chat() {
     };
 
     initChat();
+    return () => persistChatState(); // Save state when unmounting
   }, [user, location.state?.sessionId]);
 
   const loadExistingChat = async (sessionId: string) => {
@@ -95,8 +120,11 @@ export function Chat() {
       if (!messages || messages.length === 0) {
         throw new Error('No se encontraron mensajes para esta conversación');
       }
-
-      setMessages(messages.map(({ role, content }) => ({ role, content })));
+      
+      // Only set messages if we don't have them in state
+      if (!messages.length) {
+        setMessages(messages.map(({ role, content }) => ({ role, content })));
+      }
     } catch (error) {
       console.error('Error loading chat:', error);
       setError(error instanceof Error ? error.message : 'Error al cargar la conversación');
@@ -143,6 +171,11 @@ export function Chat() {
         if (sessionError) throw sessionError;
         currentSessionId = session.id;
         setSessionId(session.id);
+        // Update URL with new session ID
+        navigate(`/dashboard/chat`, { 
+          state: { sessionId: session.id },
+          replace: true 
+        });
       }
 
       const newUserMessage = { role: 'user' as const, content: userMessage };
