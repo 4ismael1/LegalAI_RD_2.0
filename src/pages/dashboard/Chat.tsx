@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Send, MessageSquare, Bot, User as UserIcon, Sparkles, AlertCircle, Loader2, Info } from 'lucide-react';
+import { Send, MessageSquare, Bot, User as UserIcon, Sparkles, AlertCircle, Info, X } from 'lucide-react';
 import { createThread, sendMessage } from '@/lib/openai';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +31,6 @@ export function Chat() {
     used: number;
     remaining: number;
   } | null>(null);
-  const [initializing, setInitializing] = useState(true);
   const [showExperimentalInfo, setShowExperimentalInfo] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -40,19 +39,15 @@ export function Chat() {
 
     const initChat = async () => {
       try {
+        setLoadingChat(true);
         setError(null);
-        setLoadingChat(false);
+        setMessages([]);
         const existingSessionId = location.state?.sessionId;
 
         // Load API limits
         const stats = await APILimits.getDailyStats(user.id);
         setDailyStats(stats);
         setApiLimitReached(stats.remaining <= 0);
-
-        // Only clear messages if no session ID is provided
-        if (!existingSessionId) {
-          setMessages([]);
-        }
 
         if (existingSessionId) {
           await loadExistingChat(existingSessionId);
@@ -65,7 +60,7 @@ export function Chat() {
         console.error('Error initializing chat:', err);
         setError('Error al iniciar el chat. Por favor, intenta de nuevo.');
       } finally {
-        setInitializing(false);
+        setLoadingChat(false);
       }
     };
 
@@ -106,7 +101,7 @@ export function Chat() {
       console.error('Error loading chat:', error);
       setError(error instanceof Error ? error.message : 'Error al cargar la conversación');
       setTimeout(() => {
-        navigate('/dashboard/chat', { replace: true, state: {} });
+        navigate('/dashboard', { replace: true, state: {} });
       }, 2000);
     }
   };
@@ -192,7 +187,7 @@ export function Chat() {
     }
   };
 
-  if (initializing) {
+  if (loadingChat) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-white">
         <div className="text-center">
@@ -236,21 +231,13 @@ export function Chat() {
       
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto px-4 lg:px-8">
-          {loadingChat && (
-            <div className="flex justify-center py-4">
-              <div className="flex items-center text-neutral-600">
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Cargando mensajes...
-              </div>
-            </div>
-          )}
           <div className="max-w-3xl mx-auto py-6">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="bg-neutral-900 text-white p-6 rounded-full mb-6">
                   <Bot className="h-12 w-12" />
                 </div>
-                <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-2xl font-bold text-neutral-900">
                     Asistente Legal AI
                   </h2>
@@ -263,7 +250,7 @@ export function Chat() {
                   </button>
                 </div>
                 <p className="text-neutral-600 mb-8 max-w-md">
-                  Estoy aquí para ayudarte con tus consultas legales. Puedes preguntarme sobre leyes, procedimientos y trámites en la República Dominicana.
+                 Este asistente de inteligencia artificial está en fase experimental y puede cometer errores. Verifica siempre la información proporcionada con fuentes oficiales.
                 </p>
                 <div className="grid gap-4 md:grid-cols-2 max-w-2xl w-full">
                   {[
@@ -284,13 +271,13 @@ export function Chat() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {messages.map((message, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
                   >
                     <div className={`flex items-start max-w-[80%] group ${
                       message.role === 'user' ? 'flex-row-reverse' : ''
@@ -298,10 +285,10 @@ export function Chat() {
                       <div className={`flex-shrink-0 ${
                         message.role === 'user' ? 'ml-3' : 'mr-3'
                       }`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                           message.role === 'user' 
                             ? 'bg-neutral-900 text-white' 
-                            : 'bg-neutral-100'
+                            : 'bg-neutral-100 group-hover:bg-neutral-200'
                         }`}>
                           {message.role === 'user' ? (
                             <UserIcon className="h-5 w-5" />
@@ -311,10 +298,10 @@ export function Chat() {
                         </div>
                       </div>
                       <div
-                        className={`relative rounded-2xl px-4 py-3 ${
+                        className={`relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 ${
                           message.role === 'user'
-                            ? 'bg-neutral-900 text-white'
-                            : 'bg-neutral-100 text-neutral-900'
+                            ? 'bg-neutral-900 text-white group-hover:shadow-md'
+                            : 'bg-neutral-100 group-hover:bg-neutral-50 group-hover:shadow-md'
                         }`}
                       >
                         {message.role === 'user' ? (
@@ -322,7 +309,7 @@ export function Chat() {
                             {message.content}
                           </div>
                         ) : (
-                          <div className="prose max-w-none prose-neutral prose-p:leading-normal prose-headings:mt-4 prose-headings:mb-2">
+                          <div className="prose-chat">
                             <ReactMarkdown>{message.content}</ReactMarkdown>
                           </div>
                         )}
@@ -336,37 +323,39 @@ export function Chat() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="flex justify-start"
+                      className="flex justify-start group"
                     >
                       <div className="flex items-start">
-                        <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center mr-3 transition-colors group-hover:bg-neutral-200">
                           <Bot className="h-5 w-5" />
                         </div>
-                        <div className="bg-neutral-100 text-neutral-900 rounded-2xl px-4 py-3">
-                          <div className="flex space-x-2">
+                        <div className="bg-neutral-100 text-neutral-900 rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 group-hover:bg-neutral-50 group-hover:shadow-md">
+                          <div className="flex items-center space-x-2">
+                            <div className="flex space-x-1">
+                              {[0, 1, 2].map((i) => (
+                                <motion.div
+                                  key={i}
+                                  className="w-2 h-2 bg-neutral-400 rounded-full"
+                                  animate={{
+                                    scale: [0.5, 1, 0.5],
+                                    opacity: [0.5, 1, 0.5]
+                                  }}
+                                  transition={{
+                                    duration: 1,
+                                    repeat: Infinity,
+                                    delay: i * 0.2,
+                                    ease: "easeInOut"
+                                  }}
+                                />
+                              ))}
+                            </div>
                             <motion.span
-                              animate={{
-                                opacity: [0, 1, 0],
-                                transition: { duration: 1.5, repeat: Infinity }
-                              }}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.3 }}
+                              className="text-sm text-neutral-500"
                             >
-                              •
-                            </motion.span>
-                            <motion.span
-                              animate={{
-                                opacity: [0, 1, 0],
-                                transition: { duration: 1.5, repeat: Infinity, delay: 0.2 }
-                              }}
-                            >
-                              •
-                            </motion.span>
-                            <motion.span
-                              animate={{
-                                opacity: [0, 1, 0],
-                                transition: { duration: 1.5, repeat: Infinity, delay: 0.4 }
-                              }}
-                            >
-                              •
+                              LegalAI está analizando tu consulta
                             </motion.span>
                           </div>
                         </div>
@@ -413,48 +402,62 @@ export function Chat() {
       </div>
       
       {/* Experimental Info Modal */}
-      {showExperimentalInfo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-                Asistente en Fase Experimental
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowExperimentalInfo(false)}
-              >
-                ×
-              </Button>
-            </div>
-            <div className="space-y-4 text-neutral-600">
-              <p>
-                Este asistente legal se encuentra en fase experimental y está en constante mejora.
-              </p>
-              <p>
-                Es importante tener en cuenta que:
-              </p>
-              <ul className="list-disc pl-5 space-y-2">
-                <li>Las respuestas proporcionadas son de carácter informativo general.</li>
-                <li>Toda la información debe ser contrastada con fuentes oficiales y legislación vigente.</li>
-                <li>No sustituye el asesoramiento legal profesional.</li>
-                <li>Para casos específicos, se recomienda consultar con un abogado calificado.</li>
-              </ul>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <Button onClick={() => setShowExperimentalInfo(false)}>
-                Entendido
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showExperimentalInfo && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-yellow-100 p-2 rounded-lg">
+                    <Info className="h-5 w-5 text-yellow-800" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-900">
+                    Asistente Experimental
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowExperimentalInfo(false)}
+                  className="text-neutral-500 hover:text-neutral-700 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="prose max-w-none text-neutral-600">
+                <p>
+                  Este asistente de inteligencia artificial está en fase experimental y puede cometer errores. 
+                  Por favor, ten en cuenta las siguientes consideraciones:
+                </p>
+                
+                <ul className="space-y-2 mt-4">
+                  <li>Las respuestas son generadas automáticamente y pueden no ser 100% precisas.</li>
+                  <li>Siempre verifica la información proporcionada con fuentes oficiales.</li>
+                  <li>No tomes decisiones legales importantes basándote únicamente en las respuestas del asistente.</li>
+                  <li>Para casos complejos, te recomendamos solicitar asesoría legal profesional.</li>
+                </ul>
+                
+                <p className="mt-4">
+                  Estamos trabajando constantemente para mejorar la precisión y utilidad del asistente.
+                </p>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <Button
+                  onClick={() => setShowExperimentalInfo(false)}
+                  className="bg-neutral-900 text-white hover:bg-neutral-800"
+                >
+                  Entendido
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
