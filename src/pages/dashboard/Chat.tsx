@@ -22,7 +22,7 @@ export function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingChat, setLoadingChat] = useState(true);
+  const [initializing, setInitializing] = useState(true);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,6 @@ export function Chat() {
 
     const initChat = async () => {
       try {
-        setLoadingChat(true);
         setError(null);
         const existingSessionId = location.state?.sessionId;
 
@@ -61,7 +60,7 @@ export function Chat() {
         console.error('Error initializing chat:', err);
         setError('Error al iniciar el chat. Por favor, intenta de nuevo.');
       } finally {
-        setLoadingChat(false);
+        setInitializing(false);
       }
     };
 
@@ -189,7 +188,7 @@ export function Chat() {
     }
   };
 
-  if (loadingChat) {
+  if (initializing) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-white">
         <div className="text-center">
