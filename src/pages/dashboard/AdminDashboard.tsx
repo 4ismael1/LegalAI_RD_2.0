@@ -258,7 +258,7 @@ export function AdminDashboard() {
                 <Route path="/advisories" element={<AdminAdvisories />} />
                 <Route path="/api-limits" element={<AdminAPILimits />} />
                 <Route path="/laws" element={<Laws />} />
-                <Route path="/revenue" element={<RevenueMetrics />} />
+        
                 <Route path="/metrics" element={<AdvancedMetrics />} />
                 <Route path="/profile" element={<Profile />} />
               </Routes>
