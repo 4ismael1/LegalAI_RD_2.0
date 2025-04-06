@@ -73,8 +73,8 @@ const faqs = [
     answer: 'Sí, ofrecemos la opción de conectarte con abogados especializados para casos que requieran atención personalizada.'
   },
   {
-    question: '¿Cuánto cuesta el servicio?',
-    answer: 'Ofrecemos diferentes planes según tus necesidades, incluyendo una versión gratuita con funcionalidades básicas.'
+    question: '¿Que hacemos con tus datos?',
+    answer: 'Cuando te registras, nos das tu consentimiento para recopilar tu nombre, correo, dirección, datos de pago y tu historial de interacciones. Esa información se usa para gestionar tu cuenta, personalizar tu experiencia y ofrecerte un servicio seguro. Todo se maneja con protocolos de cifrado y se respeta la legislación de protección de datos vigente. Además, si en algún momento prefieres retirar tu consentimiento, tienes la opción de hacerlo fácilmente.'
   }
 ];
 
