@@ -83,29 +83,39 @@ export function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Scale className="h-8 w-8 text-white" />
-              <span className="ml-2 text-xl font-bold text-white">LegalAI RD</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/register">
-                <Button variant="ghost" className="text-white hover:bg-white/10">
-                  Registrarse
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button className="bg-white text-neutral-900 hover:bg-neutral-100">
-                  Iniciar Sesión
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+     {/* Navigation */}
+<nav className="absolute top-0 left-0 right-0 z-50">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-between items-center py-6">
+      <div className="flex items-center">
+        <Scale className="h-8 w-8 text-white" />
+        <span className="ml-2 text-xl font-bold text-white">LegalAI RD</span>
+      </div>
+      <div className="flex items-center space-x-4">
+        <a
+          href="https://docs.google.com/document/d/1_HfFuCkuaQ_Sh7AwR5mZsyP4wBwuDZh0IhjjJaQK2Dc/edit?tab=t.0"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="ghost" className="text-white hover:bg-white/10">
+            Privacidad
+          </Button>
+        </a>
+        <Link to="/register">
+          <Button variant="ghost" className="text-white hover:bg-white/10">
+            Registrarse
+          </Button>
+        </Link>
+        <Link to="/login">
+          <Button className="bg-white text-neutral-900 hover:bg-neutral-100">
+            Iniciar Sesión
+          </Button>
+        </Link>
+      </div>
+    </div>
+  </div>
+</nav>
+
 
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center overflow-hidden">
