@@ -397,9 +397,10 @@ export function Landing() {
             <p className="text-xl text-neutral-200 mb-8 max-w-2xl mx-auto">
               Únete a miles de usuarios que ya confían en LegalAI RD para sus consultas legales
             </p>
-            <Link to="/register">
+            <Link to="https://docs.google.com/document/d/1_HfFuCkuaQ_Sh7AwR5mZsyP4wBwuDZh0IhjjJaQK2Dc/edit?tab=t.0">
               <Button size="lg" className="bg-white text-neutral-900 hover:bg-neutral-100">
-                Crear Cuenta Gratis <ArrowRight className="ml-2 h-5 w-5" />
+                Política de Privacidad y Condiciones de Uso
+ <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </motion.div>
