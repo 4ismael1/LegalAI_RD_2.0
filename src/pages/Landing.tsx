@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const features = [.
+const features = [
   {
     icon: MessageSquare,
     title: 'Chat Legal Inteligente',
